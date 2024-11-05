@@ -1,0 +1,2 @@
+# LLMwithSQLforge
+这是一个基于MySQL数据库和LLM的一个前端后端交互的项目
