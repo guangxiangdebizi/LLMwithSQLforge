@@ -1,0 +1,6 @@
+fastapi
+pydantic
+mysql-connector-python
+langchain
+openai
+uvicorn
