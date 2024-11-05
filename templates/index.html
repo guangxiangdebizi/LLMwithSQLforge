@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问答系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(to bottom right, #f0f8ff, #e6e6fa);
+        }
+        .top-bar {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .top-bar button {
+            background-color: white;
+            color: #4CAF50;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .top-bar button:hover {
+            background-color: #e6e6e6;
+        }
+        .container {
+            display: flex;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        #chat-box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            flex: 2;
+            margin-right: 10px;
+            background: #fff;
+        }
+        #log-box {
+            border: 1px solid #ddd;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            flex: 1;
+            resize: both;
+            overflow: auto;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            cursor: move;
+            background: #f9f9f9;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        #user-input {
+            width: calc(100% - 70px);
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        button {
+            width: 60px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .user {
+            color: blue;
+            font-weight: bold;
+        }
+        .bot {
+            color: green;
+            font-weight: bold;
+        }
+        .log {
+            color: gray;
+            font-size: 0.9em;
+        }
+        .header {
+            background: url('https://via.placeholder.com/800x100') no-repeat center center;
+            background-size: cover;
+            width: 100%;
+            height: 100px;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <span>欢迎来到问答系统 - 您的智能问答助手</span>
+        <button onclick="window.location.href='/man/'">使用手册</button>
+    </div>
+    <div class="header">欢迎来到问答系统</div>
+    <div class="container">
+        <div>
+            <div id="chat-box">
+                <p>欢迎使用问答系统！请输入您的问题。</p>
+            </div>
+            <input type="text" id="user-input" placeholder="输入您的问题" />
+            <button onclick="sendQuestion()">发送</button>
+        </div>
+        <div id="log-box">
+            <p><strong>日志窗口</strong></p>
+        </div>
+    </div>
+
+    <script>
+        // 实现窗口拖动
+        dragElement(document.getElementById("log-box"));
+
+        function dragElement(elmnt) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            elmnt.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        async function sendQuestion() {
+            const input = document.getElementById('user-input');
+            const question = input.value;
+            if (!question) return;
+
+            const chatBox = document.getElementById('chat-box');
+            const logBox = document.getElementById('log-box');
+            chatBox.innerHTML += `<p class="user"><strong>用户：</strong> ${question}</p>`;
+            logBox.innerHTML += `<p class="log">发送用户问题到服务器...</p>`;
+            input.value = '';
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: question })
+                });
+
+                logBox.innerHTML += `<p class="log">服务器收到请求，正在生成SQL查询...</p>`;
+                const data = await response.json();
+
+                logBox.innerHTML += `<p class="log">SQL查询执行成功，SQL语句为：${data.sql_query}</p>`;
+                logBox.innerHTML += `<p class="log">数据库查询结果为：${data.query_results}</p>`;
+                logBox.innerHTML += `<p class="log">生成的回答为：${data.answer}</p>`;
+                chatBox.innerHTML += `<p class="bot"><strong>系统：</strong> ${data.answer}</p>`;
+                logBox.innerHTML += `<p class="log">答案已返回给用户。</p>`;
+
+            } catch (error) {
+                logBox.innerHTML += `<p class="log" style="color: red;">请求失败：${error}</p>`;
+            }
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
